@@ -100,6 +100,7 @@ def main():
         # For a stainless steel armature
         'armature resistivity': 6.9e-7, # units: ohm m
         'armature density': 8000., # units: kg m^-3
+        'armature specific heat capacity': 500., # units: J kg^-1 K^-1
         # For copper rails
         'rail resistivity': 1.68e-8, # units: ohm m
         # For KEMET ALS7(1)(2)514NS040
@@ -151,6 +152,13 @@ def main():
         energy_used))
     print('Efficiency = {:.3f} percent'.format(
         100 * kinetic_energy / energy_used))
+
+    # Max armature temperature increase,
+    # if all power were dissipated in the armature
+    max_armature_dT = energy_used / (
+        params['armature mass'] * params['armature specific heat capacity'])
+    print('Max. possible armature temperature increase = {:.0f} K'.format(
+        max_armature_dT))
 
     # Plot results
     fig, axes = plt.subplots(
