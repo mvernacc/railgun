@@ -2,15 +2,16 @@ import numpy as np
 from scipy import constants
 import matplotlib.pyplot as plt
 
+import lmfit
 
 def contact_resistance(load):
     """Resistance of one contact between the armature and a rail.
-    Bullshit model from https://pdxscholar.library.pdx.edu/cgi/viewcontent.cgi?article=1324&context=open_access_etds
-    pdf page 19"""
-    # Model constant [units: ohm N]
-    k = 0.001 * 4.448
-    # k *= 0.1
-    return k / load
+    Fit to my experiments iwth a penny on 2020-05-23."""
+    # Reference load [units: newton]
+    load_ref = 1.46
+    # Reference resistance [units: ohm]
+    res_ref = 26.7e-3
+    return res_ref * np.exp(-load / load_ref)
 
 
 def main():
@@ -24,8 +25,18 @@ def main():
     # Rail-to-rail resistance through 2x contacts and armature [units: ohm]
     resistance = data[:, 1] * 1e-3
 
+
+    # Fit the model
+    model = lmfit.models.ExponentialModel()
+    fit_result = model.fit(
+        resistance / 2, x=load / 2,
+        amplitude=30e-3, decay=2.)
+    print(fit_result.fit_report())
+
     load_model = np.linspace(0.1, 8, 100)
-    resistance_model = 2 * contact_resistance(load_model)
+    # Half the load on each contact, 2 contacts in series
+    resistance_model = 2 * model.eval(
+        x=load_model / 2, params=fit_result.params)
 
     plt.plot(
         load, 1e3 * resistance,
@@ -37,6 +48,7 @@ def main():
         label='Model')
     plt.xlabel('Load pressing armature onto rails [N]')
     plt.ylabel('Resistance [mOhm]')
+    plt.ylim([0, 100])
     plt.legend()
 
 
